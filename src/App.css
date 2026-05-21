@@ -57,10 +57,101 @@ body,
   background-color: #569cd6;
 }
 
-.main-pane {
+.editor {
   flex: 1;
-  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background-color: #282c34;
+  color: #d4d4d4;
+}
+
+.editor-toolbar {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid #3a3a3a;
+  background-color: #21252b;
+  flex-shrink: 0;
+}
+
+.editor-toolbar button {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.85rem;
+  background-color: #3a3f4b;
+  color: #d4d4d4;
+  border: 1px solid #4a4f5b;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.editor-toolbar button:hover {
+  background-color: #4a4f5b;
+}
+
+.editor-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-body > .cm-theme,
+.editor-body > .cm-theme > .cm-editor {
+  height: 100%;
+}
+
+.editor-preview {
+  flex: 1;
+  min-height: 0;
   overflow: auto;
+  padding: 1rem 1.5rem;
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+  line-height: 1.6;
+}
+
+.editor-preview h1,
+.editor-preview h2,
+.editor-preview h3 {
+  margin-top: 1.2em;
+  margin-bottom: 0.6em;
+}
+
+.editor-preview pre {
+  background-color: #2a2a2a;
+  padding: 0.75rem;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.editor-preview code {
+  background-color: #2a2a2a;
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+  font-family: Menlo, Monaco, "Courier New", monospace;
+  font-size: 0.9em;
+}
+
+.editor-preview pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.editor-preview a {
+  color: #569cd6;
+}
+
+.editor-preview table {
+  border-collapse: collapse;
+  margin: 0.5em 0;
+}
+
+.editor-preview th,
+.editor-preview td {
+  border: 1px solid #444;
+  padding: 0.3em 0.6em;
 }
 
 .terminal {

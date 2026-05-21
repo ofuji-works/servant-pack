@@ -1,3 +1,4 @@
+import { Editor } from "./components/Editor";
 import { SplitPane } from "./components/SplitPane";
 import { Terminal } from "./components/Terminal";
 import "./App.css";
@@ -5,7 +6,7 @@ import "./App.css";
 function App() {
   return (
     <SplitPane
-      left={<div className="main-pane">servant-pack</div>}
+      left={<Editor />}
       right={<Terminal />}
       defaultRightPercent={50}
     />
