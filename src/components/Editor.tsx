@@ -12,15 +12,28 @@ const INITIAL_MD = "# Untitled\n\n";
 
 export function Editor() {
   const [content, setContent] = useState<string>(INITIAL_MD);
-  const [mode, setMode] = useState<Mode>("source");
-
-  const toggle = () => setMode((m) => (m === "source" ? "preview" : "source"));
+  const [mode, setMode] = useState<Mode>("preview");
 
   return (
     <div className="editor">
-      <div className="editor-toolbar">
-        <button type="button" onClick={toggle}>
-          {mode === "source" ? "Preview" : "Edit"}
+      <div className="editor-tabs" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === "source"}
+          className={mode === "source" ? "editor-tab editor-tab-active" : "editor-tab"}
+          onClick={() => setMode("source")}
+        >
+          Edit
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === "preview"}
+          className={mode === "preview" ? "editor-tab editor-tab-active" : "editor-tab"}
+          onClick={() => setMode("preview")}
+        >
+          Preview
         </button>
       </div>
       <div className="editor-body">
