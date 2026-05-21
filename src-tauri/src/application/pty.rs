@@ -16,6 +16,11 @@ pub fn pty_open(
     cols: u16,
     rows: u16,
 ) -> Result<(), String> {
+    let mut guard = state.0.lock().map_err(|e| e.to_string())?;
+    if guard.is_some() {
+        return Ok(());
+    }
+
     let pty_size = portable_pty::PtySize {
         rows,
         cols,
@@ -25,7 +30,10 @@ pub fn pty_open(
     let pair = portable_pty::native_pty_system()
         .openpty(pty_size)
         .map_err(|e| e.to_string())?;
-    let cmd = portable_pty::CommandBuilder::new("bash");
+    let mut cmd = portable_pty::CommandBuilder::new("bash");
+    cmd.arg("-c");
+    cmd.arg("while true; do printf '\\033c'; claude; sleep 1; done");
+
     let child = pair.slave.spawn_command(cmd).map_err(|e| e.to_string())?;
 
     drop(pair.slave);
@@ -69,7 +77,6 @@ pub fn pty_open(
     });
 
     let writer = pair.master.take_writer().map_err(|e| e.to_string())?;
-    let mut guard = state.0.lock().map_err(|e| e.to_string())?;
     guard.take();
     *guard = Some(PtySession {
         master: pair.master,
