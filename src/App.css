@@ -62,14 +62,14 @@ body,
   display: flex;
   flex-direction: column;
   min-height: 0;
-  background-color: #282c34;
-  color: #d4d4d4;
+  background-color: #ffffff;
+  color: #1f1f1f;
 }
 
 .editor-tabs {
   display: flex;
-  border-bottom: 1px solid #3a3a3a;
-  background-color: #21252b;
+  border-bottom: 1px solid #d0d7de;
+  background-color: #f6f8fa;
   flex-shrink: 0;
 }
 
@@ -77,7 +77,7 @@ body,
   padding: 0.5rem 1rem;
   font-size: 0.85rem;
   background: transparent;
-  color: #8a8f9a;
+  color: #57606a;
   border: none;
   border-bottom: 2px solid transparent;
   border-radius: 0;
@@ -87,12 +87,12 @@ body,
 }
 
 .editor-tab:hover {
-  color: #d4d4d4;
+  color: #1f1f1f;
 }
 
 .editor-tab-active {
-  color: #d4d4d4;
-  border-bottom-color: #569cd6;
+  color: #1f1f1f;
+  border-bottom-color: #0969da;
 }
 
 .editor-body {
@@ -113,8 +113,8 @@ body,
   min-height: 0;
   overflow: auto;
   padding: 1rem 1.5rem;
-  background-color: #1e1e1e;
-  color: #d4d4d4;
+  background-color: #ffffff;
+  color: #1f1f1f;
   line-height: 1.6;
 }
 
@@ -126,14 +126,14 @@ body,
 }
 
 .editor-preview pre {
-  background-color: #2a2a2a;
+  background-color: #f6f8fa;
   padding: 0.75rem;
   border-radius: 4px;
   overflow-x: auto;
 }
 
 .editor-preview code {
-  background-color: #2a2a2a;
+  background-color: #f6f8fa;
   padding: 0.1em 0.3em;
   border-radius: 3px;
   font-family: Menlo, Monaco, "Courier New", monospace;
@@ -146,7 +146,7 @@ body,
 }
 
 .editor-preview a {
-  color: #569cd6;
+  color: #0969da;
 }
 
 .editor-preview table {
@@ -156,8 +156,12 @@ body,
 
 .editor-preview th,
 .editor-preview td {
-  border: 1px solid #444;
+  border: 1px solid #d0d7de;
   padding: 0.3em 0.6em;
+}
+
+.editor-preview th {
+  background-color: #f6f8fa;
 }
 
 .terminal {

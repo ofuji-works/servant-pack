@@ -1,7 +1,6 @@
 import { useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { markdown } from "@codemirror/lang-markdown";
-import { oneDark } from "@codemirror/theme-one-dark";
 import { vim } from "@replit/codemirror-vim";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -41,7 +40,6 @@ export function Editor() {
           <CodeMirror
             value={content}
             onChange={setContent}
-            theme={oneDark}
             extensions={[vim(), markdown()]}
             height="100%"
             style={{ height: "100%" }}
