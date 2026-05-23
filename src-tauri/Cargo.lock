@@ -3117,6 +3117,7 @@ dependencies = [
 name = "servant-pack"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "derive-new",
  "portable-pty",
  "serde",
