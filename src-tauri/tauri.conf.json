@@ -12,9 +12,9 @@
   "app": {
     "windows": [
       {
-        "title": "servant-pack",
-        "width": 800,
-        "height": 600
+        "title": "Servant Pack",
+        "width": 1040,
+        "height": 800
       }
     ],
     "security": {
