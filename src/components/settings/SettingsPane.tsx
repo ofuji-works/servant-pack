@@ -4,10 +4,12 @@ import type {
   ExtensionKind,
   ResolveMode,
 } from "../../types/extension";
+import { useToast } from "../../context/ToastContext";
 import { ExtensionList } from "./ExtensionList";
 import { ImportButton } from "./ImportButton";
 import { ConflictDialog } from "./ConflictDialog";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
+import { DetailDialog } from "./DetailDialog";
 
 type Conflict = {
   kind: ExtensionKind;
@@ -19,7 +21,13 @@ type PendingDelete = {
   name: string;
 };
 
+type Selected = {
+  kind: ExtensionKind;
+  name: string;
+};
+
 export function SettingsPane() {
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<ExtensionKind>("skill");
   const [skills, setSkills] = useState<ExtensionEntry[]>([
     { kind: "skill", name: "example-skill", enabled: true },
@@ -29,6 +37,7 @@ export function SettingsPane() {
   ]);
   const [conflict, setConflict] = useState<Conflict | null>(null);
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
+  const [selected, setSelected] = useState<Selected | null>(null);
 
   const entriesFor = (kind: ExtensionKind) =>
     kind === "skill" ? skills : agents;
@@ -64,9 +73,10 @@ export function SettingsPane() {
       entriesFor(kind).filter((entry) => entry.name !== name),
     );
     setPendingDelete(null);
+    showToast("success", `Deleted ${kind} "${name}"`);
   };
 
-  const handleImport = (kind: ExtensionKind) => (name: string) => {
+  const handleImport = (kind: ExtensionKind) => async (name: string) => {
     const exists = entriesFor(kind).some((entry) => entry.name === name);
     if (exists) {
       setConflict({ kind, existingName: name });
@@ -76,6 +86,7 @@ export function SettingsPane() {
       ...entriesFor(kind),
       { kind, name, enabled: true },
     ]);
+    showToast("success", `Imported ${kind} "${name}"`);
   };
 
   const handleResolve = (mode: ResolveMode, newName?: string) => {
@@ -87,6 +98,7 @@ export function SettingsPane() {
 
     if (mode === "skip") {
       setConflict(null);
+      showToast("info", `Skipped ${kind} "${existingName}"`);
       return;
     }
 
@@ -98,6 +110,7 @@ export function SettingsPane() {
         ),
       );
       setConflict(null);
+      showToast("success", `Overwrote ${kind} "${existingName}"`);
       return;
     }
 
@@ -112,7 +125,12 @@ export function SettingsPane() {
         { kind, name: newName, enabled: true },
       ]);
       setConflict(null);
+      showToast("success", `Imported ${kind} "${newName}"`);
     }
+  };
+
+  const handleSelect = (kind: ExtensionKind) => (name: string) => {
+    setSelected({ kind, name });
   };
 
   return (
@@ -156,6 +174,7 @@ export function SettingsPane() {
           emptyMessage={`No ${activeTab}s imported yet`}
           onToggle={handleToggle(activeTab)}
           onDelete={handleDelete(activeTab)}
+          onSelect={handleSelect(activeTab)}
         />
       </div>
 
@@ -174,6 +193,39 @@ export function SettingsPane() {
           onCancel={() => setPendingDelete(null)}
         />
       )}
+
+      {selected !== null && (
+        <DetailDialog
+          kind={selected.kind}
+          name={selected.name}
+          content={mockContent(selected.kind, selected.name)}
+          onClose={() => setSelected(null)}
+        />
+      )}
     </div>
   );
+}
+
+function mockContent(kind: ExtensionKind, name: string): string {
+  if (kind === "skill") {
+    return `---
+name: ${name}
+description: (mock content)
+---
+
+# ${name}
+
+This is a mock SKILL.md preview.
+Real content will be loaded from ~/.servantpack/.claude/skills/${name}/SKILL.md.
+`;
+  }
+  return `---
+name: ${name}
+description: (mock content)
+model: sonnet
+---
+
+This is a mock agent.md preview.
+Real content will be loaded from ~/.servantpack/.claude/agents/${name}.md.
+`;
 }

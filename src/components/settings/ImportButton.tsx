@@ -1,26 +1,64 @@
+import { useState } from "react";
+import { open } from "@tauri-apps/plugin-dialog";
 import type { ExtensionKind } from "../../types/extension";
 
 type Props = {
   kind: ExtensionKind;
-  onImport: (name: string) => void;
+  onImport: (name: string) => Promise<void> | void;
 };
 
 export function ImportButton({ kind, onImport }: Props) {
-  const handleClick = () => {
-    const input = window.prompt(`Import ${kind} (mock: enter a name)`);
-    if (input === null) {
+  const [loading, setLoading] = useState(false);
+
+  const handleClick = async () => {
+    if (loading) {
       return;
     }
-    const name = input.trim();
-    if (name === "") {
-      return;
+    setLoading(true);
+    try {
+      const result = await open(
+        kind === "skill"
+          ? { directory: true, multiple: false }
+          : {
+              directory: false,
+              multiple: false,
+              filters: [{ name: "Markdown", extensions: ["md"] }],
+            },
+      );
+      if (result === null) {
+        return;
+      }
+      const path = typeof result === "string" ? result : result[0];
+      if (!path) {
+        return;
+      }
+      const name = extractName(path, kind);
+      if (name === "") {
+        return;
+      }
+      await onImport(name);
+    } finally {
+      setLoading(false);
     }
-    onImport(name);
   };
 
   return (
-    <button type="button" className="import-button" onClick={handleClick}>
-      Import {kind}
+    <button
+      type="button"
+      className="import-button"
+      onClick={handleClick}
+      disabled={loading}
+    >
+      {loading ? "Importing..." : `Import ${kind}`}
     </button>
   );
+}
+
+function extractName(path: string, kind: ExtensionKind): string {
+  const segments = path.split(/[/\\]/).filter((s) => s !== "");
+  const last = segments[segments.length - 1] ?? "";
+  if (kind === "agent" && last.endsWith(".md")) {
+    return last.slice(0, -3);
+  }
+  return last;
 }

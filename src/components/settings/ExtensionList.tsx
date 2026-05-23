@@ -5,9 +5,16 @@ type Props = {
   emptyMessage: string;
   onToggle: (name: string) => void;
   onDelete: (name: string) => void;
+  onSelect: (name: string) => void;
 };
 
-export function ExtensionList({ entries, emptyMessage, onToggle, onDelete }: Props) {
+export function ExtensionList({
+  entries,
+  emptyMessage,
+  onToggle,
+  onDelete,
+  onSelect,
+}: Props) {
   if (entries.length === 0) {
     return <p className="extension-empty">{emptyMessage}</p>;
   }
@@ -16,7 +23,14 @@ export function ExtensionList({ entries, emptyMessage, onToggle, onDelete }: Pro
     <ul className="extension-list">
       {entries.map((entry) => (
         <li key={entry.name} className="extension-row">
-          <span className="extension-name">{entry.name}</span>
+          <button
+            type="button"
+            className="extension-name"
+            onClick={() => onSelect(entry.name)}
+            title={`View ${entry.name}`}
+          >
+            {entry.name}
+          </button>
           <label className="extension-toggle">
             <input
               type="checkbox"
