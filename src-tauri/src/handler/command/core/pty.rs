@@ -1,4 +1,6 @@
-use crate::application::pty::{Pty, PtyState};
+use crate::core::pty::{Pty, PtySession};
+
+pub struct PtyState(pub std::sync::Arc<std::sync::Mutex<Option<PtySession>>>);
 
 #[tauri::command]
 pub fn pty_open(

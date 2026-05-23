@@ -7,8 +7,6 @@ pub struct PtySession {
     _child: Box<dyn portable_pty::Child + Send + Sync>,
 }
 
-pub struct PtyState(pub std::sync::Arc<std::sync::Mutex<Option<PtySession>>>);
-
 #[derive(derive_new::new)]
 pub struct Pty<'a> {
     session: &'a mut PtySession,
