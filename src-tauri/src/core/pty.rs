@@ -1,4 +1,4 @@
-use tauri::Emitter;
+use tauri::{Emitter, Manager};
 
 #[derive(derive_new::new)]
 pub struct PtySession {
@@ -24,7 +24,14 @@ impl Pty<'_> {
         let pair = portable_pty::native_pty_system()
             .openpty(pty_size)
             .map_err(|e| anyhow::anyhow!("pty:open error: {}", e.to_string()))?;
+        let home = app
+            .path()
+            .home_dir()
+            .map_err(|e| anyhow::anyhow!("pty:open error: failed to resolve home: {}", e))?;
+        let cwd = home.join(".servantpack");
+
         let mut cmd = portable_pty::CommandBuilder::new("bash");
+        cmd.cwd(cwd);
         cmd.arg("-c");
         cmd.arg("while true; do printf '\\033c'; claude; sleep 1; done");
 
