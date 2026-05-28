@@ -4,7 +4,7 @@ import type { ExtensionKind } from "../../types/extension";
 
 type Props = {
   kind: ExtensionKind;
-  onImport: (name: string) => Promise<void> | void;
+  onImport: (srcPath: string) => Promise<void> | void;
 };
 
 export function ImportButton({ kind, onImport }: Props) {
@@ -32,11 +32,7 @@ export function ImportButton({ kind, onImport }: Props) {
       if (!path) {
         return;
       }
-      const name = extractName(path, kind);
-      if (name === "") {
-        return;
-      }
-      await onImport(name);
+      await onImport(path);
     } finally {
       setLoading(false);
     }
@@ -52,13 +48,4 @@ export function ImportButton({ kind, onImport }: Props) {
       {loading ? "Importing..." : `Import ${kind}`}
     </button>
   );
-}
-
-function extractName(path: string, kind: ExtensionKind): string {
-  const segments = path.split(/[/\\]/).filter((s) => s !== "");
-  const last = segments[segments.length - 1] ?? "";
-  if (kind === "agent" && last.endsWith(".md")) {
-    return last.slice(0, -3);
-  }
-  return last;
 }
