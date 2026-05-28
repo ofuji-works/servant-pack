@@ -14,6 +14,7 @@ import {
 } from "../../lib/agents";
 import { ExtensionList } from "./ExtensionList";
 import { ImportButton } from "./ImportButton";
+import { ImportModal } from "./ImportModal";
 import { ConflictDialog } from "./ConflictDialog";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { DetailDialog } from "./DetailDialog";
@@ -59,6 +60,7 @@ export function SettingsPane() {
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
   const [pendingImport, setPendingImport] = useState<PendingImport | null>(null);
   const [selected, setSelected] = useState<Selected | null>(null);
+  const [importModalOpen, setImportModalOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -268,7 +270,10 @@ export function SettingsPane() {
       </div>
 
       <div className="settings-actions">
-        <ImportButton kind={activeTab} onImport={handleImport(activeTab)} />
+        <ImportButton
+          kind={activeTab}
+          onClick={() => setImportModalOpen(true)}
+        />
       </div>
 
       <div className="settings-body">
@@ -306,6 +311,14 @@ export function SettingsPane() {
           name={selected.name}
           content={selected.content}
           onClose={() => setSelected(null)}
+        />
+      )}
+
+      {importModalOpen && (
+        <ImportModal
+          kind={activeTab}
+          onImport={handleImport(activeTab)}
+          onClose={() => setImportModalOpen(false)}
         />
       )}
     </div>
