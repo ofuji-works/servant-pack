@@ -70,21 +70,35 @@ export function ImportModal({ kind, onImport, onClose }: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose, busy]);
 
-  const handleBrowse = async () => {
-    if (busy) return;
-    const result = await openDialog(
-      kind === "skill"
-        ? { directory: true, multiple: false }
-        : {
-            directory: false,
-            multiple: false,
-            filters: [{ name: "Markdown", extensions: ["md"] }],
-          },
-    );
+  const browseAgent = async () => {
+    const result = await openDialog({
+      directory: false,
+      multiple: false,
+      filters: [{ name: "Markdown", extensions: ["md"] }],
+    });
+    pickResult(result);
+  };
+
+  const browseSkillZip = async () => {
+    const result = await openDialog({
+      directory: false,
+      multiple: false,
+      filters: [{ name: "Zip", extensions: ["zip"] }],
+    });
+    pickResult(result);
+  };
+
+  const browseSkillFolder = async () => {
+    const result = await openDialog({ directory: true, multiple: false });
+    pickResult(result);
+  };
+
+  const pickResult = (result: string | string[] | null) => {
     if (result === null) return;
     const path = typeof result === "string" ? result : result[0];
-    if (!path) return;
-    setStagedPath(path);
+    if (path) {
+      setStagedPath(path);
+    }
   };
 
   const handleConfirm = async () => {
@@ -102,6 +116,11 @@ export function ImportModal({ kind, onImport, onClose }: Props) {
     if (busy) return;
     setStagedPath(null);
   };
+
+  const dropHint =
+    kind === "agent"
+      ? "Drop a .md file here"
+      : "Drop a .zip file or a folder here";
 
   return (
     <div className="detail-overlay" onClick={busy ? undefined : onClose}>
@@ -134,20 +153,37 @@ export function ImportModal({ kind, onImport, onClose }: Props) {
         >
           {stagedPath === null ? (
             <>
-              <p className="import-dropzone-text">
-                {kind === "agent"
-                  ? "Drop a .md file here"
-                  : "Drop a skill folder here"}
-              </p>
+              <p className="import-dropzone-text">{dropHint}</p>
               <p className="import-dropzone-or">or</p>
-              <button
-                type="button"
-                className="import-button"
-                onClick={handleBrowse}
-                disabled={busy}
-              >
-                Browse...
-              </button>
+              {kind === "agent" ? (
+                <button
+                  type="button"
+                  className="import-button"
+                  onClick={browseAgent}
+                  disabled={busy}
+                >
+                  Browse...
+                </button>
+              ) : (
+                <div className="import-browse-group">
+                  <button
+                    type="button"
+                    className="import-button"
+                    onClick={browseSkillZip}
+                    disabled={busy}
+                  >
+                    Browse zip...
+                  </button>
+                  <button
+                    type="button"
+                    className="import-button"
+                    onClick={browseSkillFolder}
+                    disabled={busy}
+                  >
+                    Browse folder...
+                  </button>
+                </div>
+              )}
             </>
           ) : (
             <>
@@ -171,14 +207,35 @@ export function ImportModal({ kind, onImport, onClose }: Props) {
               <p className="import-dropzone-or">
                 Drop another file or browse to replace
               </p>
-              <button
-                type="button"
-                className="import-button"
-                onClick={handleBrowse}
-                disabled={busy}
-              >
-                Browse...
-              </button>
+              {kind === "agent" ? (
+                <button
+                  type="button"
+                  className="import-button"
+                  onClick={browseAgent}
+                  disabled={busy}
+                >
+                  Browse...
+                </button>
+              ) : (
+                <div className="import-browse-group">
+                  <button
+                    type="button"
+                    className="import-button"
+                    onClick={browseSkillZip}
+                    disabled={busy}
+                  >
+                    Browse zip...
+                  </button>
+                  <button
+                    type="button"
+                    className="import-button"
+                    onClick={browseSkillFolder}
+                    disabled={busy}
+                  >
+                    Browse folder...
+                  </button>
+                </div>
+              )}
             </>
           )}
         </div>

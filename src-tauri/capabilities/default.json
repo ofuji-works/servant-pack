@@ -14,26 +14,33 @@
       "identifier": "fs:allow-read-text-file",
       "allow": [
         { "path": "$HOME/**" },
-        { "path": "$HOME/.servantpack/.claude/agents/*" }
+        { "path": "$HOME/.servantpack/.claude/agents/*" },
+        { "path": "$HOME/.servantpack/.claude/skills/*/**" }
       ]
     },
     {
       "identifier": "fs:allow-copy-file",
       "allow": [
         { "path": "$HOME/**" },
-        { "path": "$HOME/.servantpack/.claude/agents/*" }
+        { "path": "$HOME/.servantpack/.claude/agents/*" },
+        { "path": "$HOME/.servantpack/.claude/skills/*/**" }
       ]
     },
     {
       "identifier": "fs:allow-read-dir",
       "allow": [
-        { "path": "$HOME/.servantpack/.claude/agents" }
+        { "path": "$HOME/**" },
+        { "path": "$HOME/.servantpack/.claude/agents" },
+        { "path": "$HOME/.servantpack/.claude/skills" },
+        { "path": "$HOME/.servantpack/.claude/skills/*" },
+        { "path": "$HOME/.servantpack/.claude/skills/*/**" }
       ]
     },
     {
       "identifier": "fs:allow-write-text-file",
       "allow": [
-        { "path": "$HOME/.servantpack/.claude/agents/*" }
+        { "path": "$HOME/.servantpack/.claude/agents/*" },
+        { "path": "$HOME/.servantpack/.claude/skills/*/**" }
       ]
     },
     {
@@ -41,19 +48,33 @@
       "allow": [
         { "path": "$HOME/.servantpack" },
         { "path": "$HOME/.servantpack/.claude" },
-        { "path": "$HOME/.servantpack/.claude/agents" }
+        { "path": "$HOME/.servantpack/.claude/agents" },
+        { "path": "$HOME/.servantpack/.claude/skills" },
+        { "path": "$HOME/.servantpack/.claude/skills/*" },
+        { "path": "$HOME/.servantpack/.claude/skills/*/**" }
       ]
     },
     {
       "identifier": "fs:allow-remove",
       "allow": [
-        { "path": "$HOME/.servantpack/.claude/agents/*" }
+        { "path": "$HOME/.servantpack/.claude/agents/*" },
+        { "path": "$HOME/.servantpack/.claude/skills/*" },
+        { "path": "$HOME/.servantpack/.claude/skills/*/**" }
       ]
     },
     {
       "identifier": "fs:allow-exists",
       "allow": [
-        { "path": "$HOME/.servantpack/.claude/agents/*" }
+        { "path": "$HOME/.servantpack/.claude/agents/*" },
+        { "path": "$HOME/.servantpack/.claude/skills/*" },
+        { "path": "$HOME/.servantpack/.claude/skills/*/**" }
+      ]
+    },
+    {
+      "identifier": "fs:allow-rename",
+      "allow": [
+        { "path": "$HOME/.servantpack/.claude/skills/*" },
+        { "path": "$HOME/.servantpack/.claude/skills/*/**" }
       ]
     }
   ]

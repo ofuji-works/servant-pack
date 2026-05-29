@@ -12,6 +12,14 @@ import {
   listAgents,
   readAgent,
 } from "../../lib/agents";
+import {
+  SkillExistsError,
+  SkillMdMissingError,
+  deleteSkill,
+  importSkill,
+  listSkills,
+  readSkill,
+} from "../../lib/skills";
 import { ExtensionList } from "./ExtensionList";
 import { ImportButton } from "./ImportButton";
 import { ImportModal } from "./ImportModal";
@@ -40,21 +48,10 @@ type Selected = {
   content: string;
 };
 
-function basenameWithoutExt(srcPath: string, kind: ExtensionKind): string {
-  const segments = srcPath.split(/[/\\]/).filter((s) => s !== "");
-  const last = segments[segments.length - 1] ?? "";
-  if (kind === "agent" && last.endsWith(".md")) {
-    return last.slice(0, -3);
-  }
-  return last;
-}
-
 export function SettingsPane() {
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<ExtensionKind>("skill");
-  const [skills, setSkills] = useState<ExtensionEntry[]>([
-    { kind: "skill", name: "example-skill", enabled: true },
-  ]);
+  const [skills, setSkills] = useState<ExtensionEntry[]>([]);
   const [agents, setAgents] = useState<ExtensionEntry[]>([]);
   const [conflict, setConflict] = useState<Conflict | null>(null);
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
@@ -65,10 +62,14 @@ export function SettingsPane() {
   useEffect(() => {
     (async () => {
       try {
-        const loaded = await listAgents();
-        setAgents(loaded);
+        const [loadedAgents, loadedSkills] = await Promise.all([
+          listAgents(),
+          listSkills(),
+        ]);
+        setAgents(loadedAgents);
+        setSkills(loadedSkills);
       } catch (e) {
-        showToast("error", `Failed to load agents: ${String(e)}`);
+        showToast("error", `Failed to load extensions: ${String(e)}`);
       }
     })();
   }, [showToast]);
@@ -105,6 +106,8 @@ export function SettingsPane() {
     try {
       if (kind === "agent") {
         await deleteAgent(name);
+      } else {
+        await deleteSkill(name);
       }
       setEntriesFor(
         kind,
@@ -119,33 +122,28 @@ export function SettingsPane() {
   };
 
   const handleImport = (kind: ExtensionKind) => async (srcPath: string) => {
-    if (kind === "skill") {
-      const name = basenameWithoutExt(srcPath, kind);
-      if (name === "") {
-        return;
-      }
-      const exists = entriesFor(kind).some((entry) => entry.name === name);
-      if (exists) {
-        setPendingImport({ kind, srcPath });
-        setConflict({ kind, existingName: name });
-        return;
-      }
-      setEntriesFor(kind, [
-        ...entriesFor(kind),
-        { kind, name, enabled: true },
-      ]);
-      showToast("success", `Imported ${kind} "${name}"`);
-      return;
-    }
-
     try {
-      const entry = await importAgent(srcPath, { mode: "fail" });
-      setEntriesFor(kind, [...entriesFor(kind), entry]);
+      const entry =
+        kind === "agent"
+          ? await importAgent(srcPath, { mode: "fail" })
+          : await importSkill(srcPath, { mode: "fail" });
+      setEntriesFor(
+        kind,
+        [...entriesFor(kind), entry].sort((a, b) =>
+          a.name.localeCompare(b.name),
+        ),
+      );
       showToast("success", `Imported ${kind} "${entry.name}"`);
     } catch (e) {
-      if (e instanceof AgentExistsError) {
+      if (e instanceof AgentExistsError || e instanceof SkillExistsError) {
+        const existingName =
+          e instanceof AgentExistsError ? e.name : e.skillName;
         setPendingImport({ kind, srcPath });
-        setConflict({ kind, existingName: e.name });
+        setConflict({ kind, existingName });
+        return;
+      }
+      if (e instanceof SkillMdMissingError) {
+        showToast("error", `Import failed: SKILL.md not found`);
         return;
       }
       showToast("error", `Import failed: ${String(e)}`);
@@ -167,39 +165,23 @@ export function SettingsPane() {
       return;
     }
 
-    if (kind === "skill") {
-      if (mode === "overwrite") {
-        setEntriesFor(
-          kind,
-          current.map((entry) =>
-            entry.name === existingName ? { ...entry, enabled: true } : entry,
-          ),
-        );
-        setConflict(null);
-        setPendingImport(null);
-        showToast("success", `Overwrote ${kind} "${existingName}"`);
-        return;
-      }
-      if (mode === "rename" && newName) {
-        const renameExists = current.some((entry) => entry.name === newName);
-        if (renameExists) {
-          setConflict({ kind, existingName: newName });
-          return;
-        }
-        setEntriesFor(kind, [
-          ...current,
-          { kind, name: newName, enabled: true },
-        ]);
-        setConflict(null);
-        setPendingImport(null);
-        showToast("success", `Imported ${kind} "${newName}"`);
-      }
-      return;
-    }
-
     try {
+      const entry =
+        mode === "overwrite"
+          ? kind === "agent"
+            ? await importAgent(srcPath, { mode: "overwrite" })
+            : await importSkill(srcPath, { mode: "overwrite" })
+          : kind === "agent"
+            ? await importAgent(srcPath, {
+                mode: "rename",
+                newName: newName ?? "",
+              })
+            : await importSkill(srcPath, {
+                mode: "rename",
+                newName: newName ?? "",
+              });
+
       if (mode === "overwrite") {
-        const entry = await importAgent(srcPath, { mode: "overwrite" });
         setEntriesFor(
           kind,
           current.map((e) => (e.name === entry.name ? entry : e)),
@@ -209,16 +191,19 @@ export function SettingsPane() {
         showToast("success", `Overwrote ${kind} "${entry.name}"`);
         return;
       }
-      if (mode === "rename" && newName) {
-        const entry = await importAgent(srcPath, { mode: "rename", newName });
-        setEntriesFor(kind, [...current, entry]);
-        setConflict(null);
-        setPendingImport(null);
-        showToast("success", `Imported ${kind} "${entry.name}"`);
-      }
+
+      setEntriesFor(
+        kind,
+        [...current, entry].sort((a, b) => a.name.localeCompare(b.name)),
+      );
+      setConflict(null);
+      setPendingImport(null);
+      showToast("success", `Imported ${kind} "${entry.name}"`);
     } catch (e) {
-      if (e instanceof AgentExistsError) {
-        setConflict({ kind, existingName: e.name });
+      if (e instanceof AgentExistsError || e instanceof SkillExistsError) {
+        const existingName =
+          e instanceof AgentExistsError ? e.name : e.skillName;
+        setConflict({ kind, existingName });
         return;
       }
       showToast("error", `Failed: ${String(e)}`);
@@ -226,16 +211,13 @@ export function SettingsPane() {
   };
 
   const handleSelect = (kind: ExtensionKind) => async (name: string) => {
-    if (kind === "agent") {
-      try {
-        const content = await readAgent(name);
-        setSelected({ kind, name, content });
-      } catch (e) {
-        showToast("error", `Failed to read agent "${name}": ${String(e)}`);
-      }
-      return;
+    try {
+      const content =
+        kind === "agent" ? await readAgent(name) : await readSkill(name);
+      setSelected({ kind, name, content });
+    } catch (e) {
+      showToast("error", `Failed to read ${kind} "${name}": ${String(e)}`);
     }
-    setSelected({ kind, name, content: mockSkillContent(name) });
   };
 
   return (
@@ -323,17 +305,4 @@ export function SettingsPane() {
       )}
     </div>
   );
-}
-
-function mockSkillContent(name: string): string {
-  return `---
-name: ${name}
-description: (mock content)
----
-
-# ${name}
-
-This is a mock SKILL.md preview.
-Real content will be loaded from ~/.servantpack/.claude/skills/${name}/SKILL.md.
-`;
 }
