@@ -27,6 +27,12 @@
       ]
     },
     {
+      "identifier": "fs:allow-stat",
+      "allow": [
+        { "path": "$HOME/**" }
+      ]
+    },
+    {
       "identifier": "fs:allow-read-dir",
       "allow": [
         { "path": "$HOME/**" },

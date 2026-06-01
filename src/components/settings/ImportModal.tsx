@@ -83,7 +83,7 @@ export function ImportModal({ kind, onImport, onClose }: Props) {
     const result = await openDialog({
       directory: false,
       multiple: false,
-      filters: [{ name: "Zip", extensions: ["zip"] }],
+      filters: [{ name: "Skill archive", extensions: ["zip", "skill"] }],
     });
     pickResult(result);
   };
@@ -120,7 +120,7 @@ export function ImportModal({ kind, onImport, onClose }: Props) {
   const dropHint =
     kind === "agent"
       ? "Drop a .md file here"
-      : "Drop a .zip file or a folder here";
+      : "Drop a .zip / .skill file or a folder here";
 
   return (
     <div className="detail-overlay" onClick={busy ? undefined : onClose}>

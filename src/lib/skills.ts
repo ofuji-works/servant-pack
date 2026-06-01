@@ -8,11 +8,16 @@ import {
   readTextFile,
   remove,
   rename,
+  stat,
 } from "@tauri-apps/plugin-fs";
 import type { ExtensionEntry } from "../types/extension";
 
 const SKILLS_SUBPATH = ".servantpack/.claude/skills";
 const NAME_PATTERN = /^[A-Za-z0-9_-]+$/;
+// Staging dirs must NOT be dotfiles: on Unix the fs capability glob defaults to
+// require_literal_leading_dot=true, so `skills/*` would not match a `.tmp-*` dir
+// and every staging fs op (mkdir/copy/rename/remove) would be forbidden.
+const STAGING_PREFIX = "tmp-import-";
 
 export type ImportMode =
   | { mode: "fail" }
@@ -57,17 +62,14 @@ async function skillsDir(): Promise<string> {
   return dir;
 }
 
-function isZipPath(p: string): boolean {
-  return p.toLowerCase().endsWith(".zip");
-}
-
 function basename(p: string): string {
   const segments = p.split(/[/\\]/).filter((s) => s !== "");
   return segments[segments.length - 1] ?? p;
 }
 
-function stripZipExt(name: string): string {
-  return name.toLowerCase().endsWith(".zip") ? name.slice(0, -4) : name;
+function stripExt(name: string): string {
+  const dot = name.lastIndexOf(".");
+  return dot > 0 ? name.slice(0, dot) : name;
 }
 
 function parseFrontmatterName(content: string): string | null {
@@ -137,14 +139,19 @@ async function removeRecursive(path: string): Promise<void> {
 }
 
 function randomTmpName(): string {
-  return `.tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  return `${STAGING_PREFIX}${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 export async function listSkills(): Promise<ExtensionEntry[]> {
   const dir = await skillsDir();
   const entries = await readDir(dir);
   return entries
-    .filter((e) => e.isDirectory && !e.name.startsWith("."))
+    .filter(
+      (e) =>
+        e.isDirectory &&
+        !e.name.startsWith(".") &&
+        !e.name.startsWith(STAGING_PREFIX),
+    )
     .map((e) => ({
       kind: "skill" as const,
       name: e.name,
@@ -174,7 +181,14 @@ export async function importSkill(
   await mkdir(stagingDir, { recursive: true });
 
   try {
-    if (isZipPath(srcPath)) {
+    // Branch on what the source actually is, not its extension: skills ship as
+    // a folder or as an archive that may carry a `.zip` or `.skill` extension
+    // (both are plain zip files). The Rust extractor validates the zip magic
+    // and reports `invalid_zip` for anything that isn't a real archive.
+    const srcIsDirectory = (await stat(srcPath)).isDirectory;
+    if (srcIsDirectory) {
+      await copyDirRecursive(srcPath, stagingDir);
+    } else {
       try {
         await invoke("extract_zip", {
           zipPath: srcPath,
@@ -186,8 +200,6 @@ export async function importSkill(
           `zip extract failed (${err.code ?? "unknown"}): ${err.message ?? String(e)}`,
         );
       }
-    } else {
-      await copyDirRecursive(srcPath, stagingDir);
     }
 
     const skillRoot = await findSkillRoot(stagingDir);
@@ -201,7 +213,7 @@ export async function importSkill(
     } else {
       const content = await readTextFile(await join(skillRoot, "SKILL.md"));
       const fromFrontmatter = parseFrontmatterName(content);
-      name = fromFrontmatter ?? stripZipExt(basename(srcPath));
+      name = fromFrontmatter ?? stripExt(basename(srcPath));
     }
     validateName(name);
 
